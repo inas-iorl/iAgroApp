@@ -169,7 +169,7 @@ class formDialog extends StatelessWidget {
                     // Navigator.of(context).pop();
                     Navigator.pop(context);
                   },
-                  style: ElevatedButton.styleFrom(primary: Colors.green),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                   child: Text(
                     data == null ? "Добавить":"Изменить",
                   ),

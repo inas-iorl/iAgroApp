@@ -5,6 +5,7 @@ import 'package:co2_app_server/screens/Device.dart';
 import 'package:co2_app_server/screens/Diagnostic.dart';
 import 'package:co2_app_server/screens/DiagnosticList.dart';
 import 'package:co2_app_server/screens/FieldEdit.dart';
+import 'package:co2_app_server/screens/Map.dart';
 import 'package:co2_app_server/screens/MyDevices.dart';
 import 'package:co2_app_server/screens/DevicesList.dart';
 import 'package:co2_app_server/screens/DiagnosticOld.dart';
@@ -56,6 +57,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => HomeScreen(),
         '/login': (context) => LoginScreen(),
+        '/map': (context) => MapScreen(),
         '/shop': (context) => ShopScreen(),
         '/fields': (context) => FieldsScreen(),
         '/field': (context) => MyFieldScreen(),

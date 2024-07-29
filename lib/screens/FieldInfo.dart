@@ -4,6 +4,7 @@ import 'package:co2_app_server/models/field.dart';
 import 'package:co2_app_server/models/weather.dart';
 import 'package:co2_app_server/widgets/buttons.dart';
 import 'package:co2_app_server/widgets/loading.dart';
+import 'package:co2_app_server/widgets/map.dart';
 import 'package:co2_app_server/widgets/weather.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -14,6 +15,7 @@ import '../widgets/announcement.dart';
 import '../widgets/field_card.dart';
 import '../widgets/field_combi.dart';
 import '../widgets/field_info.dart';
+import 'package:latlong2/latlong.dart';
 
 
 class MyFieldScreen extends StatefulWidget {
@@ -91,6 +93,7 @@ class _MyFieldScreenState extends State<MyFieldScreen> {
 
     List<Widget> widgetList = [];
 
+    widgetList.add(StButton(label: 'map', url: '/map'));
     widgetList.add(StButton(label: 'Наборы поля', url: '/devices/list'));
     widgetList.add(StButton(label: 'Начать диагностирования', url: '/devices/diagnostic', arguments: {"field_id": field_id},));
     widgetList.add(StButton(label: 'Активные замеры ${_diagnostic_cnt}', url: '/field/diagnostics', arg: field_id,));
@@ -112,6 +115,7 @@ class _MyFieldScreenState extends State<MyFieldScreen> {
     if (field != null){
       widgetList.add(FieldInfoWidget(co2_value: field!.co2_value, gauge_value: field!.indicateValue, text_value: field!.text_value));
       widgetList.add(Text('Обновленно ${DateTime.now().toString()}'));
+      widgetList.add(MapWidget(position: LatLng(43.59301, 76.631282), showPlace: true,));
     }
     if(announce_msg != null){
       widgetList.add(Announcement(msg: announce_msg!, goto: ''));

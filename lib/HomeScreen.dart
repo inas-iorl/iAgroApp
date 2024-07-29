@@ -70,11 +70,11 @@ class _HomeScreenState extends State<HomeScreen> {
               label: 'Наборы'
               // label: 'Tab 2'
           ),
-          // BottomNavigationBarItem(
-          //   icon: Icon(Icons.shopping_cart),
-          //   label: 'Магазин',
-          //   // label: 'Tab 3',
-          // ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'map',
+            // label: 'Tab 3',
+          ),
         ],
       )
     );

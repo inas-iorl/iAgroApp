@@ -163,7 +163,7 @@ class FieldScreenItems extends StatelessWidget {
                 // saveData();
                 // Navigator.of(context).pop();
               },
-              style: ElevatedButton.styleFrom(primary: Colors.green),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               child: Text("Изменить"),
             ),
           ),
