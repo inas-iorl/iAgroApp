@@ -167,6 +167,18 @@ class FieldScreenItems extends StatelessWidget {
               child: Text("Изменить"),
             ),
           ),
+          Container(
+            width: double.infinity,
+            height: 60,
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed('/field/edit/map', arguments: field.id);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: Text("Изменить границы"),
+            ),
+          ),
           Text("${field.co2_value}"),
         ],
       ),

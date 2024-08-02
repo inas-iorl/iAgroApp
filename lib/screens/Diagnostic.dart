@@ -9,10 +9,11 @@ import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
+import 'package:latlong2/latlong.dart' as ll;
 import 'package:permission_handler/permission_handler.dart';
 import '../models/api.dart';
 import 'package:flutter_timer_countdown/flutter_timer_countdown.dart';
-import 'package:latlong2/latlong.dart';
 
 
 class DiagnosticScreen extends StatefulWidget {
@@ -94,45 +95,42 @@ class CheckListWidget extends StatefulWidget {
 
 class _CheckListWidgetState extends State<CheckListWidget> {
 
-  late CheckListStep step1;
-  late CheckListStep step2;
-  late CheckListStep step3;
-  late CheckListStep step4;
-  late CheckListStep step5;
-  late CheckListStep step6;
-  late CheckListStep step7;
-  late CheckListStep step8;
-  late CheckListStep step9;
-  late CheckListStep step10;
-
   String device_id = '';
   var api = GetIt.I<Api>();
   bool showMap = false;
-  LatLng? point;
+  ll.LatLng? point;
+  List<Widget> list_widgets = [];
 
   // var notice = Notify;
 
-  List<bool> enList = [false,false,false,false,false,false,false,false,false,false,false];
-
+  int currentStep = 0;
 
   List<Widget?> steps = [];
 
   void complete(int idx){
     setState(() {
-      enList[idx] = false;
-      if (enList.asMap().containsKey(idx+1)){
-        enList[idx+1] = true;
-      }
+      (list_widgets[idx] as CheckListStep).enabled = false;
+      currentStep = idx+1;
+      (list_widgets[currentStep] as CheckListStep).enabled = true;
     });
   }
 
-  getMapPoint(poinValue){
-    setState(() {
-      point=poinValue;
-      showMap = false;
-      complete(1);
-      enList[0] = false;
-    });
+  getMapPoint(ll.LatLng poinValue){
+    List<maps_toolkit.LatLng> polygon = [
+      maps_toolkit.LatLng(43.593498, 76.628047),
+      maps_toolkit.LatLng(43.595432, 76.632052),
+      maps_toolkit.LatLng(43.59218, 76.635876),
+      maps_toolkit.LatLng(43.590158, 76.631142),
+    ];
+
+    if (maps_toolkit.PolygonUtil.containsLocation(maps_toolkit.LatLng(poinValue.latitude, poinValue.longitude), polygon, false)){
+      setState(() {
+        point=poinValue;
+        showMap = false;
+        complete(1);
+        (list_widgets[0] as CheckListStep).enabled = false;
+      });
+    }
   }
 
   void scanQR(int idx) async {
@@ -144,7 +142,8 @@ class _CheckListWidgetState extends State<CheckListWidget> {
       dynamic data = json.decode(response.data);
       setState(() {
         widget.diagnostic = DiagnosticModel.fromJson(data['data']);
-        enList[idx] = false;
+        // enList[idx] = false;
+        complete(idx);
         int diff = widget.diagnostic!.measure_time!.difference(DateTime.now()).inSeconds;
         Notify.scheduledNotification(
             title: 'Время для измерения',
@@ -168,10 +167,10 @@ class _CheckListWidgetState extends State<CheckListWidget> {
       dynamic data = json.decode(response.data);
       setState(() {
         widget.diagnostic = DiagnosticModel.fromJson(data['data']);
-        enList[idx] = false;
+        complete(idx);
         int diff = widget.diagnostic!.measure_time!.difference(DateTime.now()).inSeconds;
-        print('diff $diff');
-        print('measure_time ${widget.diagnostic!.measure_time}');
+        // print('diff $diff');
+        // print('measure_time ${widget.diagnostic!.measure_time}');
         Notify.scheduledNotification(
             title: 'Время для измерения',
             body: "${widget.diagnostic?.field_id}",
@@ -198,57 +197,45 @@ class _CheckListWidgetState extends State<CheckListWidget> {
         widget.diagnostic = DiagnosticModel.fromJson(data['data']);
       });
     }
-
     complete(idx);
   }
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> list_widgets = [];
+
+    list_widgets = [
+      CheckListStep(title: 'Шаг 1', subtitle: 'Подготовьте набор и лопату', enabled: false, itemIcon: Icons.add, onTap: () => complete(0)),
+      CheckListStep(title: 'Шаг 2', subtitle: 'Веберите локацию где будет происходить измерение', enabled: false, itemIcon: Icons.add, onTap: () => selectPoint(1)),
+      CheckListStep(title: 'Шаг 3', subtitle: 'В выбранной локации выберите место откуда будет взят образец', enabled: false, itemIcon: Icons.add, onTap: () => complete(2)),
+      CheckListStep(title: 'Шаг 4', subtitle: 'Извлеките образец земли минимум с глубины в 15см и поместите в транспортный контейнер и плотно закройте крышку', enabled: false, itemIcon: Icons.add, onTap: () => complete(3)),
+      CheckListStep(title: 'Шаг 5', subtitle: 'Отсканируйте QR-код с контейнера', enabled: false, itemIcon: Icons.add, onTap: () => scanQR(4)),
+      CheckListStep(title: 'Шаг 6', subtitle: 'Приложение уведомит когда надо будет произвести изменение, переходите к следующему участку', enabled: false, itemIcon: Icons.add, onTap: () => complete(5)),
+      CheckListStep(title: 'Шаг 7', subtitle: 'Отсканируйте QR-код с контейнера', enabled: false, itemIcon: Icons.add, onTap: () => complete(6)),
+      CheckListStep(title: 'Шаг 8', subtitle: 'Подождите 24 часа для срабатывания реактивов', enabled: false, itemIcon: Icons.add, onTap: null),
+      CheckListStep(title: 'Шаг 9', subtitle: 'Сфотографируйте содержимое контейнера', enabled: false, itemIcon: Icons.add, onTap: () => takeMeasure(8)),
+      CheckListStep(title: 'Шаг 10', subtitle: 'Дождитесь результата', enabled: false, itemIcon: Icons.add)
+    ];
+
     if (widget.diagnostic != null) {
-      enList[0] = false;
       int date_compare = widget.diagnostic!.measure_time!.compareTo(DateTime?.now());
 
       if (date_compare <= 0) { // time to measure
-
         if (widget.diagnostic!.result_image.length > 5){ // image taken
-          enList[9] = true;
+          currentStep = 9;
         } else { // take image
-          enList[8] = true;
+          currentStep = 8;
         }
       }
 
       if (date_compare > 0) { // waiting
-        enList[7] = true;
+        currentStep = 7;
       }
     }
     else {
-      if (point == null){
-        enList[0] = true;
+      if (point == null && currentStep == 0){
+        currentStep = 0;
       }
     }
-
-    step1 = CheckListStep(title: 'Шаг 1', subtitle: 'Подготовьте набор и лопату', enabled: enList[0], itemIcon: Icons.add, onTap: () => complete(0));
-    step2 = CheckListStep(title: 'Шаг 2', subtitle: 'Веберите локацию где будет происходить измерение', enabled: enList[1], itemIcon: Icons.add, onTap: () => selectPoint(1));
-    step3 = CheckListStep(title: 'Шаг 3', subtitle: 'В выбранной локации выберите место откуда будет взят образец', enabled: enList[2], itemIcon: Icons.add, onTap: () => complete(2));
-    step4 = CheckListStep(title: 'Шаг 4', subtitle: 'Извлеките образец земли минимум с глубины в 15см и поместите в транспортный контейнер и плотно закройте крышку', enabled: enList[3], itemIcon: Icons.add, onTap: () => complete(3));
-    step5 = CheckListStep(title: 'Шаг 5', subtitle: 'Отсканируйте QR-код с контейнера', enabled: enList[4], itemIcon: Icons.add, onTap: () => scanQR(4));
-    step6 = CheckListStep(title: 'Шаг 6', subtitle: 'Приложение уведомит когда надо будет произвести изменение, переходите к следующему участку', enabled: enList[5], itemIcon: Icons.add, onTap: () => complete(5));
-    step7 = CheckListStep(title: 'Шаг 7', subtitle: 'Отсканируйте QR-код с контейнера', enabled: enList[6], itemIcon: Icons.add, onTap: () => complete(6));
-    step8 = CheckListStep(title: 'Шаг 8', subtitle: 'Подождите 24 часа для срабатывания реактивов', enabled: enList[7], itemIcon: Icons.add, onTap: null);
-    step9 = CheckListStep(title: 'Шаг 9', subtitle: 'Сфотографируйте содержимое контейнера', enabled: enList[8], itemIcon: Icons.add, onTap: () => takeMeasure(8));
-    step10 = CheckListStep(title: 'Шаг 10', subtitle: 'Дождитесь результата', enabled: enList[9], itemIcon: Icons.add);
-
-    list_widgets.add(step1);
-    list_widgets.add(step2);
-    list_widgets.add(step3);
-    list_widgets.add(step4);
-    list_widgets.add(step5);
-    list_widgets.add(step6);
-    list_widgets.add(step7);
-    list_widgets.add(step8);
-    list_widgets.add(step9);
-    list_widgets.add(step10);
 
     if (widget.diagnostic != null){
       if (widget.diagnostic?.result != ''){ // got result
@@ -256,14 +243,14 @@ class _CheckListWidgetState extends State<CheckListWidget> {
           ResultWidget(diagnoctic: widget.diagnostic!,)
         ];
       } else { // waiting result
-        enList[9] = true;
+        currentStep = 9;
       }
     }
 
-
+    (list_widgets[currentStep] as CheckListStep).enabled = true;
     return Column(
     mainAxisAlignment: MainAxisAlignment.start,
-    children: showMap ? [MapWidget(position: LatLng(43.59301, 76.631282),onTap: getMapPoint)] : list_widgets);
+    children: showMap ? [MapWidget(position: ll.LatLng(43.59301, 76.631282),onTap: getMapPoint)] : list_widgets);
   }
 }
 

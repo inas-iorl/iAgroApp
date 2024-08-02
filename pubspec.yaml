@@ -37,7 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   dio: ^5.4.3+1
   get_it: ^7.6.7
-  syncfusion_flutter_gauges: ^25.1.40
+  syncfusion_flutter_gauges:
   loading_animation_widget:
   qrscan: ^0.3.3
   permission_handler: ^11.3.1
@@ -46,7 +46,9 @@ dependencies:
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.3
   flutter_timer_countdown: ^1.0.7
-  flutter_map: ^7.0.2
+  flutter_map: ^6.1.0
+  maps_toolkit: ^3.0.0
+  flutter_map_dragmarker: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +60,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+
+#dependency_overrides:
+#  meta: ">=1.11.0 <1.15.0"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

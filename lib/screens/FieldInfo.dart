@@ -9,13 +9,13 @@ import 'package:co2_app_server/widgets/weather.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../models/api.dart';
 import '../widgets/announcement.dart';
 import '../widgets/field_card.dart';
 import '../widgets/field_combi.dart';
 import '../widgets/field_info.dart';
-import 'package:latlong2/latlong.dart';
 
 
 class MyFieldScreen extends StatefulWidget {

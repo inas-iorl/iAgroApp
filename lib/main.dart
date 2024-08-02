@@ -4,6 +4,7 @@ import 'package:co2_app_server/screens/Chemical.dart';
 import 'package:co2_app_server/screens/Device.dart';
 import 'package:co2_app_server/screens/Diagnostic.dart';
 import 'package:co2_app_server/screens/DiagnosticList.dart';
+import 'package:co2_app_server/screens/FIeldMapEdit.dart';
 import 'package:co2_app_server/screens/FieldEdit.dart';
 import 'package:co2_app_server/screens/Map.dart';
 import 'package:co2_app_server/screens/MyDevices.dart';
@@ -62,6 +63,7 @@ class MyApp extends StatelessWidget {
         '/fields': (context) => FieldsScreen(),
         '/field': (context) => MyFieldScreen(),
         '/field/edit': (context) => FieldScreen(),
+        '/field/edit/map': (context) => FieldMapEditScreen(),
         '/field/diagnostics': (context) => DiagnosticListScreen(),
         '/devices': (context) => DevicesScreen(),
         '/device': (context) => DeviceScreen(),
