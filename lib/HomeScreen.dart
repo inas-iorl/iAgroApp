@@ -1,4 +1,5 @@
 import 'package:co2_app_server/screens/Fields.dart';
+import 'package:co2_app_server/screens/Map.dart';
 import 'package:co2_app_server/screens/MyDevices.dart';
 import 'package:co2_app_server/screens/FieldInfo.dart';
 import 'package:co2_app_server/screens/Recommend.dart';
@@ -21,7 +22,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = <Widget>[
-    FieldsScreen(),
+    MapScreen(),
+    // FieldsScreen(),
     // RecommendTab(),
     DevicesScreen(),
     ShopScreen(),

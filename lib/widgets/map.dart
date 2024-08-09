@@ -19,7 +19,6 @@ class MapWidget extends StatefulWidget {
     LatLng(43.590158, 76.631142)
   ];
 
-
   @override
   State<MapWidget> createState() => _MapWidgetState();
 }

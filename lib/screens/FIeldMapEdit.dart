@@ -93,21 +93,21 @@ class FieldMapEdit extends StatelessWidget {
   }
 }
 
-class FieldMapEdit extends StatefulWidget {
-  FieldMapEdit({super.key, required this.field, required this.api});
-
-  FieldModel field;
-  Api api;
-  List<LatLng> newPoints = [];
-
-  @override
-  State<FieldMapEdit> createState() => _FieldMapEditState();
-}
-
-class _FieldMapEditState extends State<FieldMapEdit> {
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-}
+// class FieldMapEdit extends StatefulWidget {
+//   FieldMapEdit({super.key, required this.field, required this.api});
+//
+//   FieldModel field;
+//   Api api;
+//   List<LatLng> newPoints = [];
+//
+//   @override
+//   State<FieldMapEdit> createState() => _FieldMapEditState();
+// }
+//
+// class _FieldMapEditState extends State<FieldMapEdit> {
+//   @override
+//   Widget build(BuildContext context) {
+//     return const Placeholder();
+//   }
+// }
 

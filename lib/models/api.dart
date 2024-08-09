@@ -73,6 +73,16 @@ class Api {
     }
   }
 
+  Future<dynamic> getSubFields(String field_id) async {
+    try {
+      Response response = await dio.get('/fields/${field_id}/subfields/');
+      return response;
+    }
+    catch(a) {
+      debugPrint('getFields error');
+    }
+  }
+
   Future<dynamic> getField(String fieldId) async {
     try {
       Response response = await dio.get('/fields/${fieldId}/');
