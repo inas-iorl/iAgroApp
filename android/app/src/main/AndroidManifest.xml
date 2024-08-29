@@ -8,7 +8,7 @@
         tools:ignore="ExactAlarm" />
 
     <application
-        android:label="iAgroApp"
+        android:label="iAgroInApp"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

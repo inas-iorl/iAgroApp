@@ -108,7 +108,7 @@ class _MyFieldScreenState extends State<MyFieldScreen> {
           indicateValue: field!.indicateValue)
       );
     } else {
-      widgetList.add(Text('Добро пожаловать в iAgroApp'));
+      widgetList.add(Text('Добро пожаловать в iAgroInApp'));
       widgetList.add(TextButton(onPressed: (){Navigator.of(context).pushNamed('/fields');},
           child: Text('Добавьте первое поле')));
     }

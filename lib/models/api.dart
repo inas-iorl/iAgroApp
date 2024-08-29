@@ -63,6 +63,16 @@ class Api {
     }
   }
 
+  Future<dynamic> getMapElements() async {
+    try {
+      Response response = await dio.get('/elements/');
+      return response;
+    }
+    catch(a) {
+      debugPrint('getMapElements error');
+    }
+  }
+
   Future<dynamic> getFields() async {
     try {
       Response response = await dio.get('/fields/');

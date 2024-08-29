@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:co2_app_server/models/field.dart';
+import 'package:co2_app_server/models/map_element.dart';
+import 'package:co2_app_server/widgets/map/BottomSheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
@@ -20,105 +22,18 @@ State<MapScreen> createState() => _MapScreenState();
 
 class _MapScreenState extends State<MapScreen> {
 
+  int showMarkerElementType = 1;
+  int showBorderElementType = 1;
   bool showMarkers = true;
   bool showSubMarkers = false;
   bool showBorders = true;
   bool showSubBorders = false;
+  double? zoom;
   var api = GetIt.I<Api>();
 
+  List<MapElementModel> elements = [];
   List<FieldModel> fields = [];
   List<SubFieldModel> subFields = [];
-
-  // List<LatLng> subFields = [
-  //   LatLng(43.594941, 76.623867),
-  //   LatLng(43.596414, 76.631126),
-  //   LatLng(43.597486, 76.640992),
-  //   LatLng(43.591298, 76.622677),
-  //   LatLng(43.591557, 76.63137),
-  //   LatLng(43.59325, 76.643772),
-  //   LatLng(43.587685, 76.622689),
-  //   LatLng(43.587831, 76.632052),
-  //   LatLng(43.589045, 76.643276),
-  //   LatLng(43.58452, 76.623242),
-  //   LatLng(43.584219, 76.632049),
-  //   LatLng(43.585108, 76.642371),
-  // ];
-
-  List<List<LatLng>> subBorders = [
-    [
-      LatLng(43.593007, 76.618393),
-      LatLng(43.593615, 76.6267),
-      LatLng(43.598475, 76.626096),
-    ],
-    [
-      LatLng(43.593615, 76.6267),
-      LatLng(43.598475, 76.626096),
-      LatLng(43.599578, 76.635899),
-      LatLng(43.594413, 76.63635),
-    ],
-    [
-      LatLng(43.599578, 76.635899),
-      LatLng(43.594413, 76.63635),
-      LatLng(43.596242, 76.649572),
-      LatLng(43.600321, 76.642802),
-    ],
-    [
-      LatLng(43.592974, 76.618435),
-      LatLng(43.589565, 76.618474),
-      LatLng(43.589745, 76.627347),
-      LatLng(43.593578, 76.626698),
-    ],
-    [
-      LatLng(43.589745, 76.627347),
-      LatLng(43.593578, 76.626698),
-      LatLng(43.594366, 76.636368),
-      LatLng(43.590276, 76.636572),
-    ],
-    [
-      LatLng(43.594366, 76.636368),
-      LatLng(43.590276, 76.636572),
-      LatLng(43.59193, 76.651503),
-      LatLng(43.594197, 76.652922),
-      LatLng(43.596223, 76.649548),
-    ],
-    [
-      LatLng(43.589519, 76.618454),
-      LatLng(43.585688, 76.618501),
-      LatLng(43.585837, 76.627347),
-      LatLng(43.589741, 76.627372),
-    ],
-    [
-      LatLng(43.585837, 76.627347),
-      LatLng(43.589741, 76.627372),
-      LatLng(43.590223, 76.636622),
-      LatLng(43.58631, 76.636668),
-    ],
-    [
-      LatLng(43.58631, 76.636668),
-      LatLng(43.587266, 76.648547),
-      LatLng(43.591865, 76.651488),
-      LatLng(43.590253, 76.636617),
-    ],
-    [
-      LatLng(43.585585, 76.618519),
-      LatLng(43.584947, 76.618521),
-      LatLng(43.583024, 76.627371),
-      LatLng(43.585787, 76.627371),
-    ],
-    [
-      LatLng(43.583024, 76.627371),
-      LatLng(43.585787, 76.627371),
-      LatLng(43.586265, 76.636662),
-      LatLng(43.582733, 76.636805),
-      LatLng(43.581984, 76.632137),
-    ],
-    [
-      LatLng(43.586243, 76.636629),
-      LatLng(43.582768, 76.636788),
-      LatLng(43.584298, 76.646718),
-      LatLng(43.587282, 76.648533),
-    ],
-  ];
 
   void _loadData() async{
     var response = await api.getFields();
@@ -131,6 +46,15 @@ class _MapScreenState extends State<MapScreen> {
       if (fields.length > 0) {
         _loadSubData();
       }
+    }
+
+    response = await api.getMapElements();
+    res = [];
+    if (response != null){
+      dynamic data = json.decode(response.data);
+      setState(() {
+        elements = data['data'].map<MapElementModel>((rec) => MapElementModel.fromJson(rec)).toList();
+      });
     }
   }
 
@@ -169,35 +93,18 @@ class _MapScreenState extends State<MapScreen> {
     ),
   ];
 
-  List<Widget> selectBioChemPhSub = <Widget>[
-    Padding(
-      padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
-      child: Text('Краскосрочный'),
-    ),
-    Padding(
-      padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
-      child: Text('Долгосрочный'),
-    ),
-  ];
 
   List<bool> _selectBioChemPh = <bool>[true, false, false, false];
-  List<bool> _selectBioChemPhSub = <bool>[true, false];
 
   List<String> _selectBioChemPhCodes = ['common', 'bio', 'chem', 'phys'];
-  List<String> _selectBioChemPhSubCodes = ['short', 'long'];
 
   String _currentBioChemPhCode = 'common';
-  String _currentBioChemPhSubCode = 'short';
 
   void setBioChemPhCode(code){
     _currentBioChemPhCode = code;
   }
 
-  void setBioChemPhSubCode(code){
-    _currentBioChemPhSubCode = code;
-  }
-
-  double markValue(FieldModel data){
+  double markValue(MapElementModel data){
     switch (_currentBioChemPhCode){
       case 'common':
         return data.common;
@@ -212,7 +119,7 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Widget markContainer(FieldModel data){
+  Widget markContainer(MapElementModel data){
     double value = markValue(data);
     Color valueColor = Colors.lightBlueAccent;
     switch (value){
@@ -293,20 +200,36 @@ class _MapScreenState extends State<MapScreen> {
             border: Border.all(width: 2)));
   }
 
-  List<Marker> cordToMark(List<FieldModel> fields){
+  List<Marker> elementsToMark() {
     List<Marker> output = [];
-    for (var field in fields) {
-      if (field.point != null) {
+    for (var element in elements) {
+      if (element.point != null && element.point_type == showMarkerElementType) {
         output.add(Marker(
-          point: field.point as LatLng,
+          point: element.point as LatLng,
           width: 40,
           height: 40,
           child: GestureDetector(
             onTap: () {
-              showMenu(field);
+              showMenu(element);
               print('markerTap');
             },
-            child: markContainer(field),
+            child: markContainer(element),
+          ),
+        ));
+      }
+
+      if (element.point_type == 2 && showMarkerElementType >= 2) {
+        output.add(Marker(
+          point: element.point as LatLng,
+          width: 80,
+          height: 80,
+          child: Container(
+              width: 40.0,
+              height: 40.0,
+              child: Center(child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 60, 0, 0),
+                child: Text('${element.name}'),
+              ))
           ),
         ));
       }
@@ -314,82 +237,65 @@ class _MapScreenState extends State<MapScreen> {
     return output;
   }
 
-  List<Polygon> cordToBorder(List<FieldModel> fields){
+  List<Polygon> elementsToBorder(){
     List<Polygon> output = [];
-    for (var field in fields) {
-      output.add(
-          Polygon(
-            points: field.borders,
-            color: Colors.blue.withOpacity(0.5),
-            borderStrokeWidth: 2,
-            borderColor: Colors.blue,
-          )
-      );
-    }
-    return output;
-  }
-
-  List<Polygon> cordToSubBorder(List cords){
-    List<Polygon> output = [];
-    for (var cord in cords) {
-      output.add(
-          Polygon(
-            points: cord,
-            color: Colors.green.withOpacity(0.5),
-            borderStrokeWidth: 2,
-            borderColor: Colors.greenAccent,
-          )
-      );
-    }
-    return output;
-  }
-
-  List<Marker> cordToSubMark(List<SubFieldModel> fields){
-    List<Marker> output = [];
-    for (var field in fields) {
-      if (field.point != null) {
-        output.add(Marker(
-          point: field.point as LatLng,
-          width: 40,
-          height: 40,
-          child: GestureDetector(
-            onTap: () {
-              print('markerTap');
-            },
-            child: submarkContainer(field),
-          ),
-        ));
+    for (var element in elements) {
+      if (element.borders != null && element.point_type == showBorderElementType) {
+        output.add(
+            Polygon(
+              points: element.borders,
+              color: Colors.blue.withOpacity(0.5),
+              borderStrokeWidth: 2,
+              borderColor: Colors.blue,
+            )
+        );
       }
     }
+    // if (output.length == 0){
+    //   for (var element in elements) {
+    //     if (element.borders != null && element.point_type == showMarkerElementType-1) {
+    //       output.add(
+    //           Polygon(
+    //             points: element.borders,
+    //             color: Colors.blue.withOpacity(0.5),
+    //             borderStrokeWidth: 2,
+    //             borderColor: Colors.blue,
+    //           )
+    //       );
+    //     }
+    //   }
+    // }
     return output;
   }
 
-  void showMenu(FieldModel field){
+
+  void showMenu(MapElementModel element){
     showMaterialModalBottomSheet(
       context: context,
       enableDrag: true,
-      builder: (context) => Material(
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text("""
-Ниже среднего
+      // builder: (context) => MapBottomSheet(),
+      builder: (context) {
+          return Container(
+            height: MediaQuery.of(context).copyWith().size.height * 0.75,
+            child: SingleChildScrollView(child: MapBottomSheet(element: element)),
+          );
+        });
+  }
 
-Что это подразумевает?
+  void setMarkerShowType(int _type){
+    if (_type != showMarkerElementType){
+      setState(() {
+        showMarkerElementType = _type;
+      });
+    }
+  }
 
-1. Имеется некоторый потенциал круговорота питательных веществ;
-2. Управление пожнивными остатками все еще может быть проблемой при длительном использовании культур с высоким содержанием углерода;
-3. Дан небольшой кредит азота
-                """),
-                ),
-              ],
-            ),
-          )),
-    );
+  void setBorderShowType(int _type){
+    if (_type != showBorderElementType){
+      setState(() {
+        showBorderElementType = _type;
+      });
+    }
   }
 
   @override
@@ -415,56 +321,27 @@ class _MapScreenState extends State<MapScreen> {
               onTap: (tapPosition, point){print(point);},
               initialCenter: LatLng(43.59301, 76.631282),
               onPositionChanged: (position, hasGesture) {
-                if (position.zoom! >= 13 ){
-                  if (showSubMarkers == false) {
-                    setState(() {
-                      showMarkers = false; showSubMarkers = true;
-                      showBorders = false; showSubBorders = true;
-                    });
-                  }
-                } else {
-                  if (showSubMarkers == true) {
-                    setState(() {
-                      showMarkers = true; showSubMarkers = false;
-                      showBorders = true; showSubBorders = false;
-                    });
-                  }
-                }
+                // print('zoom ${position.zoom}');
+                setState(() {
+                  zoom = position.zoom;
+                });
+
+                if (position.zoom! < 11 ){setMarkerShowType(1);setBorderShowType(0);}
+                if (position.zoom! < 12.87 && position.zoom! >= 11){setMarkerShowType(1);setBorderShowType(1);}
+                if (position.zoom! >= 12.87 && position.zoom! < 14){setMarkerShowType(2);setBorderShowType(2);}
+                if (position.zoom! >= 14 ){setMarkerShowType(3);setBorderShowType(2);}
               }
             ),
             children: <Widget>[
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               ),
-              MarkerClusterLayerWidget(
-                options: MarkerClusterLayerOptions(
-                  maxClusterRadius: 45,
-                  size: const Size(40, 40),
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.all(50),
-                  maxZoom: 15,
-                  markers: showMarkers ? cordToMark(fields): [],
-                  builder: (context, markers) {
-                    return Container(
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.blue),
-                      child: Center(
-                        child: Text(
-                          markers.length.toString(),
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
               MarkerLayer(
-                markers: showSubMarkers ? cordToSubMark(subFields) : [],
+                markers: elementsToMark(),
               ),
               PolygonLayer(
                     polygonCulling: false,
-                    polygons: showBorders ? cordToBorder(fields) : cordToSubBorder(subBorders),
+                    polygons: elementsToBorder(),
               ),
             ],
                     ),
@@ -473,6 +350,7 @@ class _MapScreenState extends State<MapScreen> {
           alignment: Alignment.topCenter,
           child: Column(
             children: [
+              Text('$zoom'),
               ToggleButtons(
                 onPressed: (int index) {
                   setState(() {
@@ -493,28 +371,6 @@ class _MapScreenState extends State<MapScreen> {
                 ),
                 isSelected: _selectBioChemPh,
                 children: selectBioChemPh,
-              ),
-              SizedBox(height: 10),
-              ToggleButtons(
-                onPressed: (int index) {
-                  setState(() {
-                    for (int i = 0; i < _selectBioChemPhSub.length; i++) {
-                      _selectBioChemPhSub[i] = i == index;
-                    }
-                    setBioChemPhSubCode(_selectBioChemPhSubCodes[index]);
-                  });
-                },
-                borderRadius: const BorderRadius.all(Radius.circular(8)),
-                selectedBorderColor: Colors.red[700],
-                selectedColor: Colors.white,
-                fillColor: Colors.red[200],
-                color: Colors.red[400],
-                constraints: const BoxConstraints(
-                  minHeight: 40.0,
-                  minWidth: 60.0,
-                ),
-                isSelected: _selectBioChemPhSub,
-                children: selectBioChemPhSub,
               ),
             ],
           ),
