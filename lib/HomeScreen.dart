@@ -74,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),
-            label: 'map',
+            label: 'Техкарта',
             // label: 'Tab 3',
           ),
         ],

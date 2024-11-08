@@ -98,7 +98,7 @@ class formDialog extends StatelessWidget {
       await api.editField(data?['id'], name.text, culture.text, descr.text, cadNumber.text);
     }
     else {
-      await api.addField(name.text, culture.text);
+      await api.addField(name.text, culture: culture.text);
     }
     parent._loadFields();
   }

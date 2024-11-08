@@ -1,11 +1,17 @@
+import 'dart:convert';
+
 import 'package:co2_app_server/models/map_element.dart';
+import 'package:co2_app_server/widgets/diagnostic.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:get_it/get_it.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:graphic/graphic.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_toggle_tab/flutter_toggle_tab.dart';
 
+import '../../models/api.dart';
+import '../../models/diagnostic.dart';
 import '../field_combi.dart';
 import '../field_info.dart';
 
@@ -30,6 +36,7 @@ class MapBottomSheet extends StatefulWidget {
   late TabController _controller;
   MapElementModel element;
 
+
   @override
   State<MapBottomSheet> createState() => _MapBottomSheetState();
 }
@@ -37,7 +44,6 @@ class MapBottomSheet extends StatefulWidget {
 class _MapBottomSheetState extends State<MapBottomSheet> {
 
   int _mainTextIndexSelected = 0;
-
 
   Widget _text(){
     return Text("""
@@ -56,7 +62,7 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
       case 0:
         return RecommendWidget();
       case 1:
-        return DiagnosticWidget();
+        return DiagnosticWidget(element: widget.element);
       case 2:
         return DetailWidget(element: widget.element);
       default:
@@ -66,8 +72,11 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
 
   @override
   void didChangeDependencies() {
-    print(widget.element);
     super.didChangeDependencies();
+  }
+
+  void loadData() async {
+
   }
 
   
@@ -86,7 +95,6 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
                 child: DefaultTabControllerListener(
                   onTabChanged: (value) {
                     setState(() {
-                      print(value);
                       _mainTextIndexSelected = value;
                     });
                   },
@@ -108,22 +116,40 @@ class _MapBottomSheetState extends State<MapBottomSheet> {
 }
 
 
-class DetailWidget extends StatelessWidget {
+class DetailWidget extends StatefulWidget {
   DetailWidget({super.key, required this.element});
   MapElementModel element;
+
+  @override
+  State<DetailWidget> createState() => _DetailWidgetState();
+}
+
+class _DetailWidgetState extends State<DetailWidget> {
+
+  List<DiagnosticModel> diagnostics = [];
+  var api = GetIt.I<Api>();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    loadData();
+  }
+
+  void loadData() async {
+    var response = await api.getFieldDiagnostics(widget.element.id);
+    dynamic data = json.decode(response.data);
+    setState(() {
+      diagnostics = data['data'].map<DiagnosticModel>((rec) => DiagnosticModel.fromJson(rec)).toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        CombiCard(title: element.name, subtitle: '', image: '', indicateValue: 12, co2Value: 13, text_value: ''),
+        CombiCard(title: widget.element.name, subtitle: '', image: '', indicateValue: 12, co2Value: 13, text_value: ''),
         FieldInfoWidget(co2_value: 3.0, gauge_value: 4.0, text_value: 'yrdy'),
-        ListTile(leading: Icon(Icons.science_outlined), title: Text('13.5 - 2024-05-01'), subtitle: Text('Низкие значения'), trailing: Icon(Icons.arrow_forward_ios_outlined),),
-        ListTile(leading: Icon(Icons.science_outlined), title: Text('13.5 - 2024-05-01'), subtitle: Text('Низкие значения'), trailing: Icon(Icons.arrow_forward_ios_outlined),),
-        ListTile(leading: Icon(Icons.science_outlined), title: Text('13.5 - 2024-05-01'), subtitle: Text('Низкие значения'), trailing: Icon(Icons.arrow_forward_ios_outlined),),
-        ListTile(leading: Icon(Icons.science_outlined), title: Text('13.5 - 2024-05-01'), subtitle: Text('Низкие значения'), trailing: Icon(Icons.arrow_forward_ios_outlined),),
-        ListTile(leading: Icon(Icons.science_outlined), title: Text('13.5 - 2024-05-01'), subtitle: Text('Низкие значения'), trailing: Icon(Icons.arrow_forward_ios_outlined),),
-        ListTile(leading: Icon(Icons.science_outlined), title: Text('13.5 - 2024-05-01'), subtitle: Text('Низкие значения'), trailing: Icon(Icons.arrow_forward_ios_outlined),),
+        DiagnosticListWidget(diagnostics: diagnostics),
       ],
     );
   }
@@ -131,20 +157,22 @@ class DetailWidget extends StatelessWidget {
 
 
 class DiagnosticWidget extends StatelessWidget {
-  const DiagnosticWidget({super.key});
+  const DiagnosticWidget({super.key, required this.element});
+  final MapElementModel element;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        DiagnosticSelectorClusterWidget(),
+        DiagnosticSelectorClusterWidget(element: element,),
       ],
     );
   }
 }
 
 class DiagnosticSelectorClusterWidget extends StatelessWidget {
-  const DiagnosticSelectorClusterWidget({super.key});
+  const DiagnosticSelectorClusterWidget({super.key, required this.element});
+  final MapElementModel element;
 
   @override
   Widget build(BuildContext context) {
@@ -152,22 +180,30 @@ class DiagnosticSelectorClusterWidget extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Row(children: [DiagnosticSelectorWidget(), DiagnosticSelectorWidget()],
+          child: Row(children: [
+            DiagnosticSelectorWidget(name: 'Провести диагностику', descr: 'Жмякни чтобы получить что-то', route: '/devices/diagnostic', element: element, icon: Icons.science),
+            DiagnosticSelectorWidget(name: 'Название услуги', descr: 'Жмякни чтобы получить что-то', route: '', element: element),],
           mainAxisAlignment: MainAxisAlignment.spaceAround,),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Row(children: [DiagnosticSelectorWidget(), DiagnosticSelectorWidget()],
+          child: Row(children: [
+            DiagnosticSelectorWidget(name: 'Название услуги', descr: 'Жмякни чтобы получить что-то', route: '', element: element),
+            DiagnosticSelectorWidget(name: 'Название услуги', descr: 'Жмякни чтобы получить что-то', route: '', element: element),],
               mainAxisAlignment: MainAxisAlignment.spaceAround),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Row(children: [DiagnosticSelectorWidget(), DiagnosticSelectorWidget()],
+          child: Row(children: [
+            DiagnosticSelectorWidget(name: 'Название услуги', descr: 'Жмякни чтобы получить что-то', route: '', element: element),
+            DiagnosticSelectorWidget(name: 'Название услуги', descr: 'Жмякни чтобы получить что-то', route: '', element: element),],
               mainAxisAlignment: MainAxisAlignment.spaceAround),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Row(children: [DiagnosticSelectorWidget(), DiagnosticSelectorWidget()],
+          child: Row(children: [
+            DiagnosticSelectorWidget(name: 'Название услуги', descr: 'Жмякни чтобы получить что-то', route: '', element: element),
+            DiagnosticSelectorWidget(name: 'Название услуги', descr: 'Жмякни чтобы получить что-то', route: '', element: element),],
               mainAxisAlignment: MainAxisAlignment.spaceAround),
         ),
       ],
@@ -177,36 +213,49 @@ class DiagnosticSelectorClusterWidget extends StatelessWidget {
 
 
 class DiagnosticSelectorWidget extends StatelessWidget {
-  const DiagnosticSelectorWidget({super.key});
+  const DiagnosticSelectorWidget(
+      {super.key, required this.name,
+        required this.descr, required this.route,
+        required this.element, this.icon = Icons.add_call
+      });
+
+  final String name;
+  final String descr;
+  final String route;
+  final IconData icon;
+  final MapElementModel element;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(5),
-        color: Colors.orange
-      ),
-      width: 180,
-      height: 80,
-      child: Row(
-        children: [
-          Expanded(
-            flex: 1,
-            child: Icon(Icons.add_call),
-          ),
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(0, 8, 8, 0),
-              child: Column(
-                children: [
-                  Text("Название услуги", style: TextStyle(fontSize: 14.0,)),
-                  Text("Жмякни чтобы получить что-то", style: TextStyle(fontSize: 10.0)),
-                ],
-              ),
+    return GestureDetector(
+      onTap: (){Navigator.of(context).pushNamed(route, arguments: {"element": element});},
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(5),
+          color: Colors.orange
+        ),
+        width: 180,
+        height: 80,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 1,
+              child: Icon(icon),
             ),
-          )
-        ],
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 8, 8, 0),
+                child: Column(
+                  children: [
+                    Text(name, style: TextStyle(fontSize: 14.0,)),
+                    Text(descr, style: TextStyle(fontSize: 10.0)),
+                  ],
+                ),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -230,35 +279,11 @@ class _RecommendWidgetState extends State<RecommendWidget> {
   Widget build(BuildContext context) {
     return Column(
         children: [
-          // FlutterToggleTab(
-          //   width: 90, // width in percent
-          //   borderRadius: 30,
-          //   height: 50,
-          //   selectedIndex: _recomendTextIndexSelected,
-          //   selectedBackgroundColors: [Colors.blue, Colors.blueAccent],
-          //   selectedTextStyle: TextStyle(
-          //       color: Colors.white,
-          //       fontSize: 18,
-          //       fontWeight: FontWeight.w700),
-          //   unSelectedTextStyle: TextStyle(
-          //       color: Colors.black87,
-          //       fontSize: 14,
-          //       fontWeight: FontWeight.w500),
-          //   labels: _recomendlistTextTabToggle,
-          //   selectedLabelIndex: (index) {
-          //     setState(() {
-          //       print(index);
-          //       _recomendTextIndexSelected = index;
-          //     });
-          //   },
-          //   isScroll:false,
-          // ),
           DefaultTabController(
             length: 2,
             child: DefaultTabControllerListener(
               onTabChanged: (value) {
                 setState(() {
-                  print(value);
                   _recomendTextIndexSelected = value;
                 });
               },
@@ -289,11 +314,12 @@ class RecomendShortWidget extends StatelessWidget {
         children: [
           RecommendItemWidget(co_value: 0.001, index_value: 'Критичный'),
           Divider(),
-          RecommendItemWidget(co_value: 0.905, index_value: 'Средний'),
-          Divider(),
-          RecommendItemWidget(co_value: 1.156, index_value: 'Выше среднего'),
-          Divider(),
-          RecommendItemWidget(co_value: 0.156, index_value: 'Ниже среднего'),
+          Center(child: Text('Что можно сделать?')),
+          BulletList(
+              ['Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                'Praesent porttitor mi in semper malesuada.',
+                'Ut tempor justo ac massa eleifend venenatis.']
+          )
         ],
       ),
     );
@@ -312,11 +338,12 @@ class RecomendLongWidget extends StatelessWidget {
         children: [
           RecommendItemWidget(co_value: 0.156, index_value: 'Ниже среднего'),
           Divider(),
-          RecommendItemWidget(co_value: 1.156, index_value: 'Выше среднего'),
-          Divider(),
-          RecommendItemWidget(co_value: 0.905, index_value: 'Средний'),
-          Divider(),
-          RecommendItemWidget(co_value: 0.001, index_value: 'Критичный'),
+          Center(child: Text('Что можно сделать?')),
+          BulletList(
+              ['Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                'Praesent porttitor mi in semper malesuada.',
+                'Ut tempor justo ac massa eleifend venenatis.']
+          )
         ],
       ),
     );

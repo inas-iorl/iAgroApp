@@ -68,8 +68,18 @@ class Api {
       Response response = await dio.get('/elements/');
       return response;
     }
-    catch(a) {
+    catch (a) {
       debugPrint('getMapElements error');
+    }
+  }
+
+  Future<dynamic> getMapElementChildren(String elementId) async {
+    try {
+      Response response = await dio.get('/elements/$elementId/childrens/');
+      return response;
+    }
+    catch(a) {
+      debugPrint('getMapElementChildren error');
     }
   }
 
@@ -103,17 +113,30 @@ class Api {
     }
   }
 
-  Future<dynamic> addField(String name, String culture) async {
+  Future<dynamic> addField(String name,
+      {String culture = '', String number = '', String descr = ''}) async {
     try {
       Response response = await dio.post('/fields/',
           data: FormData.fromMap({
             'name': name,
             'culture': culture,
+            'egkn_id': number,
+            'description': descr,
           }));
       return response;
     }
     catch(a) {
       debugPrint('addField error');
+    }
+  }
+
+  Future<dynamic> delElementBorderPoint(String element_id, String border_index) async {
+    try {
+      Response response = await dio.delete('/elements/${element_id}/borders/delete/${border_index}/');
+      return response;
+    }
+    catch(a) {
+      debugPrint('delElementBorderPoint error');
     }
   }
 

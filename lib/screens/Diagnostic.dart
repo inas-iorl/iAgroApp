@@ -2,15 +2,19 @@ import 'dart:convert';
 
 import 'package:co2_app_server/models/diagnostic.dart';
 import 'package:co2_app_server/models/field.dart';
+import 'package:co2_app_server/models/map_element.dart';
 import 'package:co2_app_server/utils/notice.dart';
 import 'package:co2_app_server/widgets/map.dart';
+import 'package:co2_app_server/widgets/selector_map.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
-import 'package:latlong2/latlong.dart' as ll;
+import 'package:latlong2/latlong.dart';
+// import 'package:latlong2/latlong.dart' as ll;
+// import 'package:maps_toolkit/maps_toolkit.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/api.dart';
 import 'package:flutter_timer_countdown/flutter_timer_countdown.dart';
@@ -27,16 +31,19 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
 
   var api = GetIt.I<Api>();
   late String field_id;
+  late MapElementModel element;
   String? diagnostic_id;
   late FieldModel? field = null;
   DiagnosticModel? diagnostic;
 
-  Future<void> _loadField() async {
-    var response = await api.getField(field_id);
+  List<MapElementModel> elements = [];
+
+  Future<void> _loadFieldChildrens() async {
+    var response = await api.getMapElementChildren(element.id);
     if (response != null){
       dynamic data = json.decode(response.data);
       setState(() {
-        field = FieldModel.fromJson(data['data']);
+        elements = data['data'].map<MapElementModel>((rec) => MapElementModel.fromJson(rec)).toList();
       });
     }
   }
@@ -54,9 +61,9 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
   @override
   void didChangeDependencies() async {
     var args = ModalRoute.of(context)!.settings.arguments as Map;
-    field_id = args["field_id"];
+    element = args["element"];
     diagnostic_id = args["diagnostic_id"];
-    await _loadField();
+    await _loadFieldChildrens();
     if (diagnostic_id != null) {
       await _loadDiagnostic();
     }
@@ -70,12 +77,12 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
 
     return Scaffold(
         appBar: AppBar(
-          title: Text('Диагностика поля $diagnostic_id'),
+          title: Text('Диагностика ${element.name}'),
         ),
         body: Padding(
           padding: EdgeInsets.all(15),
           child: SingleChildScrollView(
-            child: CheckListWidget(field_id: field_id, diagnostic: diagnostic,),
+            child: CheckListWidget(element: element, diagnostic: diagnostic, elements: elements),
           )
           ,)
     );
@@ -84,9 +91,14 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
 
 
 class CheckListWidget extends StatefulWidget {
-  CheckListWidget({super.key, required this.field_id, this.diagnostic});
+  CheckListWidget({super.key,
+    required this.element,
+    required this.elements,
+    this.diagnostic});
 
-  String field_id;
+  // String field_id;
+  MapElementModel element;
+  List<MapElementModel> elements;
   late DiagnosticModel? diagnostic;
 
   @override
@@ -98,7 +110,7 @@ class _CheckListWidgetState extends State<CheckListWidget> {
   String device_id = '';
   var api = GetIt.I<Api>();
   bool showMap = false;
-  ll.LatLng? point;
+  String? selectedPoint;
   List<Widget> list_widgets = [];
 
   // var notice = Notify;
@@ -115,29 +127,21 @@ class _CheckListWidgetState extends State<CheckListWidget> {
     });
   }
 
-  getMapPoint(ll.LatLng poinValue){
-    List<maps_toolkit.LatLng> polygon = [
-      maps_toolkit.LatLng(43.593498, 76.628047),
-      maps_toolkit.LatLng(43.595432, 76.632052),
-      maps_toolkit.LatLng(43.59218, 76.635876),
-      maps_toolkit.LatLng(43.590158, 76.631142),
-    ];
+  getMapPoint(String elementId){
+    setState(() {
+      selectedPoint=elementId;
+      showMap = false;
+      complete(1);
+      (list_widgets[0] as CheckListStep).enabled = false;
+    });
 
-    if (maps_toolkit.PolygonUtil.containsLocation(maps_toolkit.LatLng(poinValue.latitude, poinValue.longitude), polygon, false)){
-      setState(() {
-        point=poinValue;
-        showMap = false;
-        complete(1);
-        (list_widgets[0] as CheckListStep).enabled = false;
-      });
-    }
   }
 
   void scanQR(int idx) async {
     await Permission.camera.request();
     var device_id = await FlutterBarcodeScanner.scanBarcode('#ff6666', 'Cancel', true, ScanMode.QR);
     // String device_id = '666fef37a9cb413bd56086d2';
-    var response = await api.addDiagnostic(device_id, widget.field_id, '');
+    var response = await api.addDiagnostic(device_id, widget.element.id, '');
     if (response != null){
       dynamic data = json.decode(response.data);
       setState(() {
@@ -162,7 +166,7 @@ class _CheckListWidgetState extends State<CheckListWidget> {
 
   void moke_scanQR(int idx) async {
     String device_id = '666fef37a9cb413bd56086d2';
-    var response = await api.addDiagnostic(device_id, widget.field_id, '');
+    var response = await api.addDiagnostic(device_id, widget.element.id, '');
     if (response != null){
       dynamic data = json.decode(response.data);
       setState(() {
@@ -206,14 +210,13 @@ class _CheckListWidgetState extends State<CheckListWidget> {
     list_widgets = [
       CheckListStep(title: 'Шаг 1', subtitle: 'Подготовьте набор и лопату', enabled: false, itemIcon: Icons.add, onTap: () => complete(0)),
       CheckListStep(title: 'Шаг 2', subtitle: 'Веберите локацию где будет происходить измерение', enabled: false, itemIcon: Icons.add, onTap: () => selectPoint(1)),
-      CheckListStep(title: 'Шаг 3', subtitle: 'В выбранной локации выберите место откуда будет взят образец', enabled: false, itemIcon: Icons.add, onTap: () => complete(2)),
-      CheckListStep(title: 'Шаг 4', subtitle: 'Извлеките образец земли минимум с глубины в 15см и поместите в транспортный контейнер и плотно закройте крышку', enabled: false, itemIcon: Icons.add, onTap: () => complete(3)),
-      CheckListStep(title: 'Шаг 5', subtitle: 'Отсканируйте QR-код с контейнера', enabled: false, itemIcon: Icons.add, onTap: () => scanQR(4)),
-      CheckListStep(title: 'Шаг 6', subtitle: 'Приложение уведомит когда надо будет произвести изменение, переходите к следующему участку', enabled: false, itemIcon: Icons.add, onTap: () => complete(5)),
-      CheckListStep(title: 'Шаг 7', subtitle: 'Отсканируйте QR-код с контейнера', enabled: false, itemIcon: Icons.add, onTap: () => complete(6)),
-      CheckListStep(title: 'Шаг 8', subtitle: 'Подождите 24 часа для срабатывания реактивов', enabled: false, itemIcon: Icons.add, onTap: null),
-      CheckListStep(title: 'Шаг 9', subtitle: 'Сфотографируйте содержимое контейнера', enabled: false, itemIcon: Icons.add, onTap: () => takeMeasure(8)),
-      CheckListStep(title: 'Шаг 10', subtitle: 'Дождитесь результата', enabled: false, itemIcon: Icons.add)
+      CheckListStep(title: 'Шаг 3', subtitle: 'Извлеките образец земли минимум с глубины в 15см и поместите в транспортный контейнер и плотно закройте крышку', enabled: false, itemIcon: Icons.add, onTap: () => complete(2)),
+      CheckListStep(title: 'Шаг 4', subtitle: 'Отсканируйте QR-код с контейнера', enabled: false, itemIcon: Icons.add, onTap: () => scanQR(3)),
+      CheckListStep(title: 'Шаг 5', subtitle: 'Приложение уведомит когда надо будет произвести изменение, переходите к следующему участку', enabled: false, itemIcon: Icons.add, onTap: () => complete(4)),
+      CheckListStep(title: 'Шаг 6', subtitle: 'Отсканируйте QR-код с контейнера', enabled: false, itemIcon: Icons.add, onTap: () => complete(5)),
+      CheckListStep(title: 'Шаг 7', subtitle: 'Подождите 24 часа для срабатывания реактивов', enabled: false, itemIcon: Icons.add, onTap: null),
+      CheckListStep(title: 'Шаг 8', subtitle: 'Сфотографируйте содержимое контейнера', enabled: false, itemIcon: Icons.add, onTap: () => takeMeasure(7)),
+      CheckListStep(title: 'Шаг 9', subtitle: 'Дождитесь результата', enabled: false, itemIcon: Icons.add)
     ];
 
     if (widget.diagnostic != null) {
@@ -232,7 +235,7 @@ class _CheckListWidgetState extends State<CheckListWidget> {
       }
     }
     else {
-      if (point == null && currentStep == 0){
+      if (selectedPoint == null && currentStep == 0){
         currentStep = 0;
       }
     }
@@ -250,7 +253,11 @@ class _CheckListWidgetState extends State<CheckListWidget> {
     (list_widgets[currentStep] as CheckListStep).enabled = true;
     return Column(
     mainAxisAlignment: MainAxisAlignment.start,
-    children: showMap ? [MapWidget(position: ll.LatLng(43.59301, 76.631282),onTap: getMapPoint)] : list_widgets);
+    children: showMap ? [
+      SelectorMapWidget(
+          position: widget.element.point!,
+          elements: widget.elements,
+          onTap: getMapPoint)] : list_widgets);
   }
 }
 

@@ -36,9 +36,19 @@ class FieldModel {
       );
 
   factory FieldModel.fromJson(dynamic data) {
+    var borders;
+    var point;
     var current_values = json.decode(data['current_values']);
-    var point = json.decode(data['point']);
-    var borders = json.decode(data['borders']);
+    if (data['point'].runtimeType == String){
+      point = json.decode(data['point']);
+    } else {
+      point = data['point'];
+    }
+    if (data['borders'].runtimeType == String){
+      borders = json.decode(data['borders']);
+    } else {
+      borders = data['borders'];
+    }
     return FieldModel(
       data['_id'] ?? '', //this.id,
       data['image'] ?? '', //this.image,

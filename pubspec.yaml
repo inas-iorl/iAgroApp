@@ -54,6 +54,7 @@ dependencies:
   graphic: ^2.4.0
   flutter_toggle_tab: ^1.4.1
   tab_container: ^3.5.3
+  flutter_map_geojson: ^1.0.8
 
 dev_dependencies:
   flutter_test:

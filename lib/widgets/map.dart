@@ -4,20 +4,22 @@ import 'package:flutter_map_dragmarker/flutter_map_dragmarker.dart';
 import 'package:latlong2/latlong.dart';
 
 class MapWidget extends StatefulWidget {
-  MapWidget({super.key, required this.position, this.showPlace = false, this.showBoundaryPoints = false, this.onTap, this.onLongPress});
+  MapWidget({super.key,
+    required this.position,
+    this.showPlace = false,
+    this.showBoundaryPoints = false,
+    this.onTap,
+    this.onLongPress
+  });
   LatLng position;
+  List<LatLng> markers = [];
+  List<LatLng> bounds = [];
   bool showPlace;
   bool showBoundaryPoints;
   final Function? onTap;
   final Function? onLongPress;
 
   LatLng? markerMoveStart;
-  List<LatLng> bounds = [
-    LatLng(43.593498, 76.628047),
-    LatLng(43.595432, 76.632052),
-    LatLng(43.59218, 76.635876),
-    LatLng(43.590158, 76.631142)
-  ];
 
   @override
   State<MapWidget> createState() => _MapWidgetState();
@@ -25,33 +27,33 @@ class MapWidget extends StatefulWidget {
 
 class _MapWidgetState extends State<MapWidget> {
 
-  moveBound(LatLng oldPoint, LatLng newPoint){
-    var point_idx = widget.bounds.indexWhere((point) => point.longitude == oldPoint.longitude && point.latitude == oldPoint.latitude);
-    setState(() {
-      widget.bounds[point_idx] = newPoint;
-    });
-  }
+  // moveBound(LatLng oldPoint, LatLng newPoint){
+  //   var point_idx = widget.bounds.indexWhere((point) => point.longitude == oldPoint.longitude && point.latitude == oldPoint.latitude);
+  //   setState(() {
+  //     widget.bounds[point_idx] = newPoint;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
     List<DragMarker> boundMarkers = [];
 
-    widget.bounds.forEach((mark){
-      boundMarkers.add(
-          DragMarker(
-            point: mark,
-            offset: const Offset(0.0, 0.0),
-            builder: (_, __, ___) => Icon(Icons.add, size: 30),
-            onDragStart: (details, latLng) {
-              widget.markerMoveStart = latLng;
-            },
-            onDragEnd: (details, latLng) {
-              moveBound(widget.markerMoveStart!, latLng);
-            },
-            size: const Size.square(50),
-          )
-      );
-    });
+    // widget.bounds.forEach((mark){
+    //   boundMarkers.add(
+    //       DragMarker(
+    //         point: mark,
+    //         offset: const Offset(0.0, 0.0),
+    //         builder: (_, __, ___) => Icon(Icons.add, size: 30),
+    //         onDragStart: (details, latLng) {
+    //           widget.markerMoveStart = latLng;
+    //         },
+    //         onDragEnd: (details, latLng) {
+    //           moveBound(widget.markerMoveStart!, latLng);
+    //         },
+    //         size: const Size.square(50),
+    //       )
+    //   );
+    // });
 
     return Container(
       width: double.infinity,

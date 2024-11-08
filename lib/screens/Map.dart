@@ -13,6 +13,9 @@ import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import '../models/api.dart';
 import '../models/subfield.dart';
 
+
+
+
 class MapScreen extends StatefulWidget {
 const MapScreen({super.key});
 
@@ -28,8 +31,16 @@ class _MapScreenState extends State<MapScreen> {
   bool showSubMarkers = false;
   bool showBorders = true;
   bool showSubBorders = false;
+  bool showBorderMarker = false;
+  bool markerEditMode = false;
+  String markerSelected = '';
   double? zoom;
   var api = GetIt.I<Api>();
+
+  final _newNameController = TextEditingController();
+  final _newNumberController = TextEditingController();
+  final _newCultureController = TextEditingController();
+  final _newDescrController = TextEditingController();
 
   List<MapElementModel> elements = [];
   List<FieldModel> fields = [];
@@ -38,15 +49,15 @@ class _MapScreenState extends State<MapScreen> {
   void _loadData() async{
     var response = await api.getFields();
     List res = [];
-    if (response != null){
-      dynamic data = json.decode(response.data);
-      setState(() {
-        fields = data['data'].map<FieldModel>((rec) => FieldModel.fromJson(rec)).toList();
-      });
-      if (fields.length > 0) {
-        _loadSubData();
-      }
-    }
+    // if (response != null){
+    //   dynamic data = json.decode(response.data);
+    //   setState(() {
+    //     fields = data['data'].map<FieldModel>((rec) => FieldModel.fromJson(rec)).toList();
+    //   });
+    //   if (fields.length > 0) {
+    //     _loadSubData();
+    //   }
+    // }
 
     response = await api.getMapElements();
     res = [];
@@ -54,6 +65,18 @@ class _MapScreenState extends State<MapScreen> {
       dynamic data = json.decode(response.data);
       setState(() {
         elements = data['data'].map<MapElementModel>((rec) => MapElementModel.fromJson(rec)).toList();
+      });
+    }
+  }
+
+  void _deleteBorderPoint() async{
+    var data = markerSelected.split(':');
+    var response = await api.delElementBorderPoint(data[0] as String, data[1] as String);
+    if (response != null){
+      dynamic data = json.decode(response.data);
+      var el = MapElementModel.fromJson(data['data']);
+      setState(() {
+        elements[elements.indexWhere((element) => element.id == el.id)] = el;
       });
     }
   }
@@ -233,6 +256,52 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ));
       }
+
+      if (showBorderMarker || markerEditMode){
+        int cnt = 0;
+        for (final (index, borderPoint) in element.borders.indexed){
+          cnt += 1;
+          output.add(Marker(
+            point: borderPoint,
+            width: 30,
+            height: 40,
+            child: Container(
+                width: 30.0,
+                height: 40.0,
+                child: GestureDetector(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(0,0,0,20),
+                    child: Icon(
+                      Icons.place,
+                      color: markerSelected == "${element.id}:${index}" ? Colors.red : Colors.black,),
+                  ),
+                  onTap: () {
+                    print("${borderPoint}");
+                  },)
+            ),
+          ));
+
+          output.add(Marker(
+            point: borderPoint,
+            width: 30,
+            height: 40,
+            child: GestureDetector(
+              onTap: (){
+                if (markerEditMode) {
+                  setState(() {
+                    markerSelected = "${element.id}:${index}";
+                  });
+                }
+              },
+              child: Container(
+                  width: 80.0,
+                  height: 40.0,
+                  child: Text('${cnt}')
+              ),
+            ),
+          ));
+        }
+      }
     }
     return output;
   }
@@ -240,7 +309,7 @@ class _MapScreenState extends State<MapScreen> {
   List<Polygon> elementsToBorder(){
     List<Polygon> output = [];
     for (var element in elements) {
-      if (element.borders != null && element.point_type == showBorderElementType) {
+      if ((element.borders != null && element.point_type == showBorderElementType) || showBorderMarker) {
         output.add(
             Polygon(
               points: element.borders,
@@ -267,7 +336,6 @@ class _MapScreenState extends State<MapScreen> {
     // }
     return output;
   }
-
 
   void showMenu(MapElementModel element){
     showMaterialModalBottomSheet(
@@ -302,15 +370,107 @@ class _MapScreenState extends State<MapScreen> {
   void didChangeDependencies() {
     _loadData();
     super.didChangeDependencies();
+
+  }
+
+  void _showForm(){
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          scrollable: true,
+          title: Text('Добавить участок'),
+          content: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Form(
+              child: Column(
+                children: <Widget>[
+                  TextFormField(
+                    controller: _newNameController,
+                    decoration: InputDecoration(
+                      labelText: 'Название',
+                    ),
+                  ),
+                  TextFormField(
+                    controller: _newNumberController,
+                    decoration: InputDecoration(
+                      labelText: 'Номер',
+                    ),
+                  ),
+                  TextFormField(
+                    controller: _newCultureController,
+                    decoration: InputDecoration(
+                      labelText: 'Культура',
+                    ),
+                  ),
+                  TextFormField(
+                    controller: _newDescrController,
+                    decoration: InputDecoration(
+                      labelText: 'Описание',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+                child: Text("Создать"),
+                onPressed: addField)
+          ],
+        );
+      });
+  }
+
+  void addField() async {
+    var response = await api.addField(_newNameController.text,
+      descr: _newDescrController.text, culture: _newCultureController.text,
+      number: _newNumberController.text,
+    );
+    _loadData();
+    // var response = await api.getFields();
+    // List res = [];
+    // if (response != null){
+    //   dynamic data = json.decode(response.data);
+    //   setState(() {
+    //     fields = data['data'].map<FieldModel>((rec) => FieldModel.fromJson(rec)).toList();
+    //   });
+    //   if (fields.length > 0) {
+    //     _loadSubData();
+    //   }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Карта')),
-      floatingActionButton: FloatingActionButton(child: Icon(Icons.refresh), onPressed: () {
-        _loadData();
-      }),
+      floatingActionButton: Stack(
+        children: [
+          Align(
+              alignment: Alignment.bottomLeft,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
+                child: FloatingActionButton(child: Icon(Icons.add), onPressed: () {_showForm();}),
+              )
+          ),
+          Align(
+              alignment: Alignment.bottomRight,
+              child: FloatingActionButton(child: Icon(Icons.refresh), onPressed: () {_loadData();})
+          ),
+          Align(
+              alignment: Alignment.bottomCenter,
+              child: FloatingActionButton(child: Icon(showBorderMarker ? Icons.check_box_outlined : Icons.check_box_outline_blank_outlined), onPressed: () {setState(() {
+                showBorderMarker = !showBorderMarker;
+                markerEditMode = !markerEditMode;
+                markerSelected = '';
+              });})
+          ),
+          markerSelected != '' ? Align(
+              alignment: Alignment.centerRight,
+              child: FloatingActionButton(child: Icon(Icons.delete_forever), onPressed: () {_deleteBorderPoint();})
+          ) : Text(''),
+        ]
+      ),
       body: Stack(
         children: <Widget>[
           Align(
@@ -320,6 +480,7 @@ class _MapScreenState extends State<MapScreen> {
               maxZoom: 15,
               onTap: (tapPosition, point){print(point);},
               initialCenter: LatLng(43.59301, 76.631282),
+              // initialCenter: LatLng(45.993807, 14.483972),
               onPositionChanged: (position, hasGesture) {
                 // print('zoom ${position.zoom}');
                 setState(() {
