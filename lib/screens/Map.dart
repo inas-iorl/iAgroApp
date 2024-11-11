@@ -77,6 +77,7 @@ class _MapScreenState extends State<MapScreen> {
       var el = MapElementModel.fromJson(data['data']);
       setState(() {
         elements[elements.indexWhere((element) => element.id == el.id)] = el;
+        markerSelected = '';
       });
     }
   }
@@ -288,6 +289,7 @@ class _MapScreenState extends State<MapScreen> {
             child: GestureDetector(
               onTap: (){
                 if (markerEditMode) {
+                  print(element.borders[index]);
                   setState(() {
                     markerSelected = "${element.id}:${index}";
                   });
@@ -478,7 +480,7 @@ class _MapScreenState extends State<MapScreen> {
             child: FlutterMap(
             options: MapOptions(
               maxZoom: 15,
-              onTap: (tapPosition, point){print(point);},
+              onTap: (tapPosition, point){print('[${point.latitude},${point.longitude}]');},
               initialCenter: LatLng(43.59301, 76.631282),
               // initialCenter: LatLng(45.993807, 14.483972),
               onPositionChanged: (position, hasGesture) {
