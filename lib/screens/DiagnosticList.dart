@@ -20,7 +20,7 @@ class DiagnosticListScreen extends StatefulWidget {
 class _DiagnosticListScreenState extends State<DiagnosticListScreen> {
 
   var api = GetIt.I<Api>();
-  late String field_id;
+  late int field_id;
   List<DiagnosticModel> diagnostics = [];
 
   final ButtonStyle button_style =
@@ -41,7 +41,7 @@ class _DiagnosticListScreenState extends State<DiagnosticListScreen> {
 
   @override
   void didChangeDependencies() {
-    field_id = ModalRoute.of(context)!.settings.arguments as String;
+    field_id = ModalRoute.of(context)!.settings.arguments as int;
     _loadDIagnostics();
     super.didChangeDependencies();
   }

@@ -10,11 +10,12 @@ import 'package:get_it/get_it.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
+
 import '../models/api.dart';
 import '../models/subfield.dart';
 
 
-
+import 'dart:math';
 
 class MapScreen extends StatefulWidget {
 const MapScreen({super.key});
@@ -128,23 +129,24 @@ class _MapScreenState extends State<MapScreen> {
     _currentBioChemPhCode = code;
   }
 
-  double markValue(MapElementModel data){
-    switch (_currentBioChemPhCode){
-      case 'common':
-        return data.common;
-      case 'bio':
-        return data.biological;
-      case 'chem':
-        return data.chemical;
-      case 'phys':
-        return data.physical;
-      default:
-        return 0.0;
-    }
+  int markValue(MapElementModel data){
+    return data.value;
+    // switch (_currentBioChemPhCode){
+    //   case 'common':
+    //             return data.common;
+    //   case 'bio':
+    //     return data.biological;
+    //   case 'chem':
+    //     return data.chemical;
+    //   case 'phys':
+    //     return data.physical;
+    //   default:
+    //     return 0.0;
+    // }
   }
 
   Widget markContainer(MapElementModel data){
-    double value = markValue(data);
+    int value = markValue(data);
     Color valueColor = Colors.lightBlueAccent;
     switch (value){
       case < 5.0:

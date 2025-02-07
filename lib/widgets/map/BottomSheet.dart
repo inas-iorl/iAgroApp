@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:co2_app_server/models/map_element.dart';
 import 'package:co2_app_server/widgets/diagnostic.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_toggle_tab/flutter_toggle_tab.dart';
 
 import '../../models/api.dart';
 import '../../models/diagnostic.dart';
+import '../ElementData.dart';
 import '../field_combi.dart';
 import '../field_info.dart';
 
@@ -137,10 +139,14 @@ class _DetailWidgetState extends State<DetailWidget> {
 
   void loadData() async {
     var response = await api.getFieldDiagnostics(widget.element.id);
-    dynamic data = json.decode(response.data);
-    setState(() {
-      diagnostics = data['data'].map<DiagnosticModel>((rec) => DiagnosticModel.fromJson(rec)).toList();
-    });
+    if (response != null) {
+      dynamic data = json.decode(response);
+      setState(() {
+        diagnostics = data['data']
+            .map<DiagnosticModel>((rec) => DiagnosticModel.fromJson(rec))
+            .toList();
+      });
+    }
   }
 
   @override
@@ -150,6 +156,7 @@ class _DetailWidgetState extends State<DetailWidget> {
         CombiCard(title: widget.element.name, subtitle: '', image: '', indicateValue: 12, co2Value: 13, text_value: ''),
         FieldInfoWidget(co2_value: 3.0, gauge_value: 4.0, text_value: 'yrdy'),
         DiagnosticListWidget(diagnostics: diagnostics),
+        ElementDataWidget(element: widget.element,)
       ],
     );
   }
@@ -304,22 +311,26 @@ class _RecommendWidgetState extends State<RecommendWidget> {
 
 class RecomendShortWidget extends StatelessWidget {
   const RecomendShortWidget({super.key});
-
   @override
   Widget build(BuildContext context) {
+    List<String> bullist = [
+      'Внимание!',
+      'Ограничение почвы',
+      'Низкое укоренение растений',
+      'Слабая передача воды'];
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          RecommendItemWidget(co_value: 0.001, index_value: 'Критичный'),
-          Divider(),
-          Center(child: Text('Что можно сделать?')),
-          BulletList(
-              ['Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                'Praesent porttitor mi in semper malesuada.',
-                'Ut tempor justo ac massa eleifend venenatis.']
-          )
+          RecommendItemWidget(co_value: 0.001, index_value: 'Критичный', bullist: bullist),
+          Divider()
+          // Center(child: Text('Что подразумевает?')),
+          // BulletList(
+          //     ['Имеется некоторый потенциал круговорота питательных веществ',
+          //       'Управление пожнивными остатками все еще может быть проблемой при длительном использовании культур с высоким содержанием углерода',
+          //       'Дан небольшой кредит азота']
+          // )
         ],
       ),
     );
@@ -331,19 +342,22 @@ class RecomendLongWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<String> bullist = ['Имеется некоторый потенциал круговорота питательных веществ',
+      'Управление пожнивными остатками все еще может быть проблемой при длительном использовании культур с высоким содержанием углерода',
+      'Дан небольшой кредит азота'];
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          RecommendItemWidget(co_value: 0.156, index_value: 'Ниже среднего'),
-          Divider(),
-          Center(child: Text('Что можно сделать?')),
-          BulletList(
-              ['Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                'Praesent porttitor mi in semper malesuada.',
-                'Ut tempor justo ac massa eleifend venenatis.']
-          )
+          RecommendItemWidget(co_value: 0.156, index_value: 'Ниже среднего', bullist: bullist),
+          Divider()
+          // Center(child: Text('Что можно сделать?')),
+          // BulletList(
+          //     ['Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+          //       'Praesent porttitor mi in semper malesuada.',
+          //       'Ut tempor justo ac massa eleifend venenatis.']
+          // )
         ],
       ),
     );
@@ -480,9 +494,10 @@ class BulletList extends StatelessWidget {
 
 class RecommendItemWidget extends StatelessWidget {
   RecommendItemWidget({super.key,
-    required this.co_value, required this.index_value});
+    required this.co_value, required this.index_value, required this.bullist});
   double co_value;
   String index_value;
+  List<String> bullist;
 
   @override
   Widget build(BuildContext context) {
@@ -499,11 +514,7 @@ class RecommendItemWidget extends StatelessWidget {
                 DetailMicroWidget(index_value: index_value)],
             ),
             Text('Что это подразумевает?'),
-            BulletList(
-                ['Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                  'Praesent porttitor mi in semper malesuada.',
-                  'Ut tempor justo ac massa eleifend venenatis.']
-            ),
+            BulletList(bullist),
           ],
         ),
       ),

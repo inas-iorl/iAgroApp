@@ -6,7 +6,7 @@ import 'package:flutter/cupertino.dart';
 import '../main.dart';
 
 class Api {
-  static var uri = "https://cabinet.btcom.kz/co2";
+  static var uri = "https://cabinet.btcom.kz/co2/api";
   static BaseOptions options = BaseOptions(
       baseUrl: uri,
       responseType: ResponseType.plain,
@@ -73,7 +73,7 @@ class Api {
     }
   }
 
-  Future<dynamic> getMapElementChildren(String elementId) async {
+  Future<dynamic> getMapElementChildren(int elementId) async {
     try {
       Response response = await dio.get('/elements/$elementId/childrens/');
       return response;
@@ -291,7 +291,7 @@ class Api {
     }
   }
 
-  Future<dynamic> addDiagnostic(String device_id, String field_id, String field_part) async {
+  Future<dynamic> addDiagnostic(String device_id, int field_id, String field_part) async {
     try {
       Response response = await dio.post('/diagnostic/',
           data: FormData.fromMap({
@@ -316,7 +316,17 @@ class Api {
     }
   }
 
-  Future<dynamic> getFieldDiagnostics(String field_id) async {
+  Future<dynamic> getElementDataLatest(int element_id) async {
+    try {
+      Response response = await dio.get('/elements/${element_id}/data/latest/');
+      return response;
+    }
+    catch(a) {
+      debugPrint('getElementDataLatest error');
+    }
+  }
+
+  Future<dynamic> getFieldDiagnostics(int field_id) async {
     try {
       Response response = await dio.get('/fields/${field_id}/diagnostics/');
       return response;
